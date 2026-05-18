@@ -125,7 +125,7 @@ The page opens automatically in **Receive Mode** on mobile browsers.
 
 ## Author
 
-**Jidor Tang** (唐继东)
+**Jidor Tang**
 ✉️ [tlqtangok@126.com](mailto:tlqtangok@126.com)
 🐙 [github.com/tlqtangok](https://github.com/tlqtangok)
 
