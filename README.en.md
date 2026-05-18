@@ -137,6 +137,6 @@ The page opens automatically in **Receive Mode** on mobile browsers.
 
 If you find hiqr useful, feel free to buy me a coffee ☕
 
-<img src="img/jd_reward_code_small.png" alt="WeChat Reward Code" width="200"/>
+<img src="img/jd_reward_code_small.png" alt="WeChat Reward Code" width="400"/>
 
 *WeChat Reward Code*

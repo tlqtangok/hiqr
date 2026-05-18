@@ -137,6 +137,6 @@
 
 如果hiqr对您有帮助，欢迎请我喝杯咖啡 ☕
 
-<img src="img/jd_reward_code_small.png" alt="WeChat Reward Code" width="200"/>
+<img src="img/jd_reward_code_small.png" alt="WeChat Reward Code" width="400"/>
 
 *微信赞赏码*
