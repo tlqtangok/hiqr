@@ -22,6 +22,7 @@ h1 { text-align: center; font-size: 1.4em; margin: 20px 0 10px; color: #1d1d1f; 
 #qrcode-box canvas, #qrcode-box img { border-radius: 12px; padding: 16px; background: #fff; box-shadow: 0 1px 6px rgba(0,0,0,0.08); transition: all 0.25s ease; max-width:100%; }
 #qrcode-box.zoomed { min-height: 600px; margin: 20px auto; }
 #qrcode-box.zoomed canvas, #qrcode-box.zoomed img { transform: scale(1.8); transform-origin: center; width:280px;height:280px;max-width:none; }
+img[alt="微信赞赏码"] { width: 270px !important; height: auto !important; }
 #progress-bar { width: 100%; height: 8px; background: #e5e5ea; border-radius: 4px; overflow: hidden; margin: 12px 0; }
 #progress-fill { height: 100%; background: #0071e3; border-radius: 4px; width: 0%; transition: width 0.3s; }
 #status { text-align: center; color: #86868b; font-size: 0.9em; margin: 8px 0; min-height: 1.4em; }
@@ -56,6 +57,8 @@ h1 { text-align: center; font-size: 1.4em; margin: 20px 0 10px; color: #1d1d1f; 
     background: rgba(0,0,0,0.04); color: #1d1d1f; border: 1px solid rgba(0,0,0,0.08);
 }
 .apple-btn-secondary:hover { background: rgba(0,0,0,0.08); }
+.ctrl-row { display: flex; gap: 4%; margin-top: 8px; }
+.ctrl-row .btn { flex: 1; width: auto; display: block; margin-top: 0; }
 </style>
 </head>
 <body>
@@ -79,16 +82,21 @@ h1 { text-align: center; font-size: 1.4em; margin: 20px 0 10px; color: #1d1d1f; 
     <div class="chunk-info" id="chunkInfo2" style="font-weight:600;color:#0071e3;font-size:0.95em;"></div>
     <div id="progress-bar"><div id="progress-fill"></div></div>
     <div id="status"></div>
-    <button class="btn btn-secondary" id="prevBtn" onclick="prevChunk()" style="display:none;">⬅️ 上一帧</button>
-    <button class="btn btn-secondary" id="nextBtn" onclick="nextChunk()" style="display:none;margin-top:8px;">➡️ 下一帧</button>
-    <button class="btn btn-primary" id="pauseBtn" onclick="togglePause()" style="display:none;margin-top:8px;background:#ffd60a;color:#000;">⏸️ 暂停</button>
-    <button class="btn btn-secondary" id="zoomBtn" onclick="toggleZoom()" style="display:none;margin-top:8px;">🔍 放大2倍</button>
+    <div class="ctrl-row" style="display:none;" id="btnRow1">
+      <button class="btn btn-secondary" id="prevBtn" onclick="prevChunk()">⬅️ 上一帧</button>
+      <button class="btn btn-secondary" id="nextBtn" onclick="nextChunk()">➡️ 下一帧</button>
+    </div>
+    <div class="ctrl-row" style="display:none;" id="btnRow2">
+      <button class="btn btn-primary" id="pauseBtn" onclick="togglePause()" style="background:#ffd60a;color:#000;">⏸️ 暂停</button>
+      <button class="btn btn-secondary" id="zoomBtn" onclick="toggleZoom()">🔍 放大2倍</button>
+    </div>
   </div>
 
   <!-- 接收模式（手机端） -->
   <div class="card" id="recvCard">
     <div id="receive-area">
       <button class="btn btn-primary" id="startCamBtn" onclick="startCamera()">📷 启动摄像头扫描</button>
+      <button class="btn btn-secondary" id="resetScanBtn" onclick="resetReceiveScan()" style="display:none;margin-top:10px;">🔄 重新扫码</button>
       <video id="camera-view" autoplay playsinline></video>
       <canvas id="scan-canvas" style="display:none;"></canvas>
       <div id="receive-progress"></div>
@@ -110,6 +118,13 @@ h1 { text-align: center; font-size: 1.4em; margin: 20px 0 10px; color: #1d1d1f; 
       </div>
     </div>
   </div>
+</div>
+
+<!-- 作者信息 -->
+<div style="text-align:center;margin:28px 0 16px;color:#86868b;font-size:0.82em;line-height:1.8;">
+  <p>Author: <strong>Jidor Tang</strong> &lt;<a href="mailto:tlqtangok@126.com" style="color:#0071e3;text-decoration:none;">tlqtangok@126.com</a>&gt;</p>
+  <p style="margin-top:6px;">☕ 觉得好用？请作者喝杯咖啡 ☕</p>
+  <img src="data:image/jpeg;base64,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" style="width:180px;height:auto;border-radius:12px;margin-top:8px;" alt="微信赞赏码">
 </div>
 
 <!-- 用国内可用的CDN -->
@@ -10224,22 +10239,265 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 // ============ 工具函数 ============
 
 /**
- * ArrayBuffer → Base64 字符串（不会爆栈）
+ * Uint8Array → Base64 字符串（不会爆栈）
  */
-function arrayBufferToBase64(buffer)
+function uint8ToBase64(bytes)
 {
-    const bytes = new Uint8Array(buffer);
     let result = '';
     const CHUNK = 8192;
     for (let i = 0; i < bytes.length; i += CHUNK)
     {
-        result += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+        const slice = bytes.subarray(i, i + CHUNK);
+        result += String.fromCharCode.apply(null, slice);
     }
     return btoa(result);
 }
 
 /**
- * CRC32 校验码 — 纯JS实现，用于文件完整性校验
+ * Base64 字符串 → Uint8Array（不会爆栈）
+ */
+function base64ToUint8(str)
+{
+    var binary = atob(str);
+    var bytes = new Uint8Array(binary.length);
+    for (var j = 0; j < binary.length; j++) bytes[j] = binary.charCodeAt(j);
+    return bytes;
+}
+
+/**
+ * 纯 JS deflate-raw 解压（RFC 1951），无任何依赖
+ * 兼容所有浏览器，用于 DecompressionStream 不可用时的 fallback
+ */
+function inflateRawJS(data)
+{
+    var BITS = [16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15];
+    var LENS = [3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31, 35,
+        43, 51, 59, 67, 83, 99, 115, 131, 163, 195, 227, 258];
+    var LEXT = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3,
+        3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 0];
+    var DISTS = [1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129,
+        193, 257, 385, 513, 769, 1025, 1537, 2049, 3073, 4097, 6145,
+        8193, 12289, 16385, 24577];
+    var DEXT = [0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7,
+        8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13];
+
+    var pos = 0, bitBuf = 0, bitLen = 0;
+    var output = [];
+
+    function readBits(n)
+    {
+        while (bitLen < n)
+        {
+            if (pos >= data.length) throw new Error('Unexpected end of compressed data at pos ' + pos);
+            bitBuf |= data[pos++] << bitLen; bitLen += 8;
+        }
+        var val = bitBuf & ((1 << n) - 1);
+        bitBuf >>>= n; bitLen -= n; // unsigned shift prevents sign-bit corruption
+        return val;
+    }
+
+    function readRevBits(n)
+    {
+        var val = 0;
+        for (var i = 0; i < n; i++) val |= (readBits(1) << i);
+        return val;
+    }
+
+    /* 构建霍夫曼树：codeLengths → decode 表 */
+    function buildHuff(lengths)
+    {
+        var maxLen = 0, i;
+        for (i = 0; i < lengths.length; i++)
+            if (lengths[i] > maxLen) maxLen = lengths[i];
+        if (maxLen === 0) return null;
+
+        var blCount = new Uint16Array(maxLen + 1);
+        for (i = 0; i < lengths.length; i++) blCount[lengths[i]]++;
+        blCount[0] = 0; // RFC 1951 §3.2.2: unused symbols must not affect code numbering
+
+        var code = 0, nextCode = new Uint16Array(maxLen + 1);
+        for (var bits = 1; bits <= maxLen; bits++)
+        {
+            code = (code + blCount[bits - 1]) << 1;
+            nextCode[bits] = code;
+        }
+
+        var table = [];
+        for (i = 0; i < lengths.length; i++)
+        {
+            if (lengths[i] !== 0)
+                table.push({ code: nextCode[lengths[i]]++, len: lengths[i], sym: i });
+        }
+        table.sort(function (a, b)
+        {
+            return a.len !== b.len ? a.len - b.len : a.code - b.code;
+        });
+
+        return table;
+    }
+
+    function decodeSym(table)
+    {
+        var code = 0, len = 0;
+        // 安全限制：防止无限循环（码长不会超过 maxLen * 2）
+        for (var guard = 0; guard < 64; guard++)
+        {
+            code = (code << 1) | readBits(1); len++;
+            for (var i = 0; i < table.length; i++)
+            {
+                if (table[i].len === len && table[i].code === code)
+                    return table[i].sym;
+            }
+        }
+        throw new Error('Huffman decode failed (bad data or corrupt stream)');
+    }
+
+    /* 固定霍夫曼码表 */
+    var fixedLitTable = (function ()
+    {
+        var lengths = [];
+        for (var i = 0; i <= 143; i++) lengths.push(8);
+        for (i = 144; i <= 255; i++) lengths.push(9);
+        for (i = 256; i <= 279; i++) lengths.push(7);
+        for (i = 280; i <= 287; i++) lengths.push(8);
+        return buildHuff(lengths);
+    })();
+
+    var fixedDistTable = (function ()
+    {
+        var lengths = [];
+        for (var i = 0; i < 32; i++) lengths.push(5);
+        return buildHuff(lengths);
+    })();
+
+    function inflateBlock(litTable, distTable)
+    {
+        var MAX_OUT = data.length * 20;  // 解压后不会超过原始的20倍
+        while (output.length < MAX_OUT)
+        {
+            var sym = decodeSym(litTable);
+            if (sym < 256)
+            { output.push(sym); }
+            else if (sym === 256)
+            { return; }
+            else
+            {
+                var li = sym - 257;
+                if (li < 0 || li >= LENS.length) throw new Error('Invalid literal/length symbol: ' + sym);
+                var length = LENS[li] + readBits(LEXT[li]);
+                var dsym = decodeSym(distTable);
+                if (dsym < 0 || dsym >= DISTS.length) throw new Error('Invalid distance symbol: ' + dsym);
+                var di = dsym;
+                var distance = DISTS[di] + readBits(DEXT[di]);
+                if (distance > output.length) throw new Error('Distance too large: ' + distance + ' > ' + output.length);
+                for (var k = 0; k < length; k++)
+                    output.push(output[output.length - distance]);
+            }
+        }
+        throw new Error('Decompressed size exceeds limit (' + MAX_OUT + ')');
+    }
+
+    // 安全限制：最多处理 100 个块（通常只有1-2个）
+    var blockCount = 0;
+    do
+    {
+        if (++blockCount > 100) throw new Error('Too many blocks, possibly corrupt data');
+        var bfinal = readBits(1);
+        var btype = readBits(2);
+
+        if (btype === 0)
+        {
+            // 存储块
+            bitLen = 0; bitBuf = 0;
+            var slen = data[pos++]; slen |= data[pos++] << 8;
+            var nlen = data[pos++]; nlen |= data[pos++] << 8;
+            for (var i = 0; i < slen; i++) output.push(data[pos++]);
+        }
+        else if (btype === 1)
+        {
+            inflateBlock(fixedLitTable, fixedDistTable);
+        }
+        else if (btype === 2)
+        {
+            var hlit  = readBits(5) + 257;
+            var hdist = readBits(5) + 1;
+            var hclen = readBits(4) + 4;
+
+            var clens = new Array(19).fill(0);
+            for (var i = 0; i < hclen; i++) clens[BITS[i]] = readBits(3);
+
+            var codeTree = buildHuff(clens);
+            var allLengths = [];
+
+            while (allLengths.length < hlit + hdist)
+            {
+                var s = decodeSym(codeTree);
+                if (s < 16) { allLengths.push(s); }
+                else if (s === 16)
+                {
+                    var repeat = readBits(2) + 3;
+                    var prev = allLengths[allLengths.length - 1];
+                    for (var j = 0; j < repeat; j++) allLengths.push(prev);
+                }
+                else if (s === 17)
+                {
+                    var repeat = readBits(3) + 3;
+                    for (var j = 0; j < repeat; j++) allLengths.push(0);
+                }
+                else // s === 18
+                {
+                    var repeat = readBits(7) + 11;
+                    for (var j = 0; j < repeat; j++) allLengths.push(0);
+                }
+            }
+
+            var litLens = allLengths.slice(0, hlit);
+            var distLens = allLengths.slice(hlit);
+            inflateBlock(buildHuff(litLens), buildHuff(distLens));
+        }
+
+    } while (!bfinal);
+
+    return new Uint8Array(output);
+}
+
+/**
+ * gzip 压缩 Uint8Array → 返回 Uint8Array（异步）
+ */
+async function gzipCompress(data)
+{
+    if (typeof CompressionStream === 'undefined') return data;
+    var stream = new ReadableStream({ start(c) { c.enqueue(data); c.close(); } })
+        .pipeThrough(new CompressionStream('deflate-raw'));
+    var buf = await new Response(stream).arrayBuffer();
+    return new Uint8Array(buf);
+}
+
+/**
+ * gunzip 解压 Uint8Array → 返回 Uint8Array（异步）
+ * 优先使用原生 DecompressionStream，不可用时回退纯 JS 实现
+ */
+async function gunzipDecompress(data)
+{
+    if (typeof DecompressionStream !== 'undefined')
+    {
+        try
+        {
+            var stream = new ReadableStream({ start(c) { c.enqueue(data); c.close(); } })
+                .pipeThrough(new DecompressionStream('deflate-raw'));
+            var buf = await new Response(stream).arrayBuffer();
+            return new Uint8Array(buf);
+        }
+        catch (e)
+        {
+            // Safari 16.0-16.3 has DecompressionStream but not 'deflate-raw'; fall through to JS
+        }
+    }
+    return inflateRawJS(data);
+}
+
+/**
+ * CRC32 校验码 — 纯JS实现，用于数据完整性校验
  */
 function crc32(str)
 {
@@ -10306,7 +10564,7 @@ function setError(msg)
     document.getElementById('error-msg').textContent = msg;
 }
 
-function startSend()
+async function startSend()
 {
     const file = document.getElementById('fileInput').files[0];
     if (!file) return;
@@ -10316,57 +10574,66 @@ function startSend()
     document.getElementById('sendBtn').disabled = true;
 
     const reader = new FileReader();
-    reader.onload = function(e)
+    reader.onload = async function(e)
     {
         try
         {
-            // 第一步：文件 → Base64（安全方式不爆栈）
-            const b64 = arrayBufferToBase64(e.target.result);
+            // 第一步：文件 → 原始字节
+            var rawBytes = new Uint8Array(e.target.result);
+            document.getElementById('status').textContent = '正在压缩数据...';
 
-            // 计算校验码
-            const checksum = crc32(b64);
+            // 第二步：gzip 压缩（浏览器原生 API 或纯 JS）
+            var compressed = await gzipCompress(rawBytes);
+            var isCompressed = typeof CompressionStream !== 'undefined' && compressed.length < rawBytes.length;
 
-            // 第二步：按CHUNK_SIZE切片
-            const rawChunks = [];
-            for (let i = 0; i < b64.length; i += CHUNK_SIZE)
+            // 第三步：压缩后 → Base64
+            var b64 = uint8ToBase64(compressed);
+            var ratio = ((1 - b64.length / Math.max(rawBytes.length * 4 / 3, 1)) * 100).toFixed(0);
+
+            // 计算校验码（基于压缩后的 Base64）
+            var checksum = crc32(b64);
+
+            // 第四步：按 CHUNK_SIZE 切片
+            var rawChunks = [];
+            for (var i = 0; i < b64.length; i += CHUNK_SIZE)
             {
                 rawChunks.push(b64.slice(i, i + CHUNK_SIZE));
             }
 
-            const total = rawChunks.length;
+            var total = rawChunks.length;
             chunks = [];
 
-            // 第三步：每片包装成JSON字符串
-            // 每帧都带 t（总帧数）和 c（校验码），手机端可从任意帧开始
-            for (let i = 0; i < rawChunks.length; i++)
+            // 第五步：每帧包装成JSON（z 标识是否已压缩）
+            for (var k = 0; k < rawChunks.length; k++)
             {
-                if (i === 0)
+                if (k === 0)
                 {
                     chunks.push(JSON.stringify({
                         h: 1,           // header标记
                         n: file.name,
-                        s: file.size,
+                        s: file.size,   // 原始文件大小
                         t: total,
                         c: checksum,
+                        z: isCompressed ? 1 : 0,  // 是否gzip压缩
+                        r: ratio + '%', // 压缩率
                         d: rawChunks[0]
                     }));
                 }
                 else
                 {
                     chunks.push(JSON.stringify({
-                        i: i,
+                        i: k,
                         t: total,
                         c: checksum,
-                        d: rawChunks[i]
+                        z: isCompressed ? 1 : 0,
+                        d: rawChunks[k]
                     }));
                 }
             }
 
             // 验证每帧长度不超过二维码容量（v38 L级 ≈ 2634字节，留余量）
-            let maxLen = 0;
-            chunks.forEach(function(c) {
-                if (c.length > maxLen) maxLen = c.length;
-            });
+            var maxLen = 0;
+            chunks.forEach(function(c) { if (c.length > maxLen) maxLen = c.length; });
 
             if (maxLen > 2500)
             {
@@ -10375,14 +10642,20 @@ function startSend()
                 return;
             }
 
+            stopAutoPlay();
+            paused = false;
             loopCount = 0;
             chunkIndex = 0;
             showChunk(0);
-            document.getElementById('prevBtn').style.display = 'block';
-            document.getElementById('nextBtn').style.display = 'block';
-            document.getElementById('pauseBtn').style.display = 'block';
-            document.getElementById('zoomBtn').style.display = 'block';
+            document.getElementById('btnRow1').style.display = 'flex';
+            document.getElementById('btnRow2').style.display = 'flex';
+            document.getElementById('pauseBtn').textContent = '⏸️ 暂停';
             startAutoPlay();
+
+            // 更新状态显示压缩率
+            document.getElementById('file-info').textContent =
+                `📄 ${file.name}  (${(file.size / 1024).toFixed(1)} KB)` +
+                ` | 🗜️ ${ratio}% | ${total} 帧`;
         }
         catch (ex)
         {
@@ -10517,6 +10790,7 @@ function startCamera()
 {
     const video = document.getElementById('camera-view');
     document.getElementById('startCamBtn').style.display = 'none';
+    document.getElementById('resetScanBtn').style.display = 'block';
     video.style.display = 'block';
 
     navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
@@ -10542,6 +10816,35 @@ function stopCamera()
     }
     video.style.display = 'none';
     scanning = false;
+}
+
+function resetReceiveScan()
+{
+    stopCamera();
+
+    recvChunks = {};
+    recvTotal = 0;
+    recvChecksum = '';
+    recvMeta = null;
+    receivedTextCache = '';
+
+    if (receivedUrl)
+    {
+        URL.revokeObjectURL(receivedUrl);
+        receivedUrl = null;
+    }
+    receivedBlob = null;
+
+    document.getElementById('receive-progress').textContent = '';
+    document.getElementById('recv-status').textContent = '🔄 已清空，重新扫码中...';
+    document.getElementById('file-link').style.display = 'none';
+    document.getElementById('action-btns').style.display = 'none';
+    document.getElementById('img-preview').style.display = 'none';
+    document.getElementById('txt-preview').style.display = 'none';
+    document.getElementById('preview-img').src = '';
+    document.getElementById('preview-txt').textContent = '';
+
+    startCamera();
 }
 
 function scanFrame()
@@ -10600,8 +10903,8 @@ function handleRecvData(data)
 
         if (raw.h === 1)
         {
-            // 头帧 — 提取文件名和大小
-            recvMeta = { name: raw.n, size: raw.s };
+            // 头帧 — 提取文件名、大小、压缩标识
+            recvMeta = { name: raw.n, size: raw.s, compressed: raw.z === 1 };
             recvChunks['0'] = raw.d;
             showToast('✅ 扫到头帧（第1帧）');
         }
@@ -10637,7 +10940,7 @@ function handleRecvData(data)
 let receivedBlob = null;
 let receivedUrl = null;
 
-function assembleFile()
+async function assembleFile()
 {
     stopCamera();
 
@@ -10656,7 +10959,7 @@ function assembleFile()
         b64 += chunk;
     }
 
-    // CRC32校验
+    // CRC32校验（对压缩后的Base64做校验）
     var actualCrc = crc32(b64);
     if (recvChecksum && actualCrc !== recvChecksum)
     {
@@ -10665,61 +10968,75 @@ function assembleFile()
         return;
     }
 
-    // Base64 → 二进制 → Blob
-    var binary = atob(b64);
-    var bytes = new Uint8Array(binary.length);
-    for (var j = 0; j < binary.length; j++) bytes[j] = binary.charCodeAt(j);
+    // 显示状态
+    document.getElementById('recv-status').innerHTML =
+        recvMeta.compressed ? '✅ 校验通过！正在解压...' : '✅ 校验通过！处理中...';
 
-    receivedBlob = new Blob([bytes]);
-    if (receivedUrl) URL.revokeObjectURL(receivedUrl);
-    receivedUrl = URL.createObjectURL(receivedBlob);
-
-    var fileName = recvMeta.name || 'download';
-    var ext = fileName.split('.').pop().toLowerCase();
-
-    // 显示文件信息区域
-    document.getElementById('file-link').style.display = 'block';
-    document.getElementById('action-btns').style.display = 'flex';
-
-    // 隐藏所有预览
-    document.getElementById('img-preview').style.display = 'none';
-    document.getElementById('txt-preview').style.display = 'none';
-
-    // 根据文件类型显示不同预览
-    if (['jpg', 'jpeg', 'png', 'bmp', 'gif', 'webp', 'svg'].indexOf(ext) !== -1)
+    try
     {
-        // 图片 — 直接显示
-        var imgEl = document.getElementById('preview-img');
-        imgEl.src = receivedUrl;
-        document.getElementById('img-preview').style.display = 'block';
-        document.getElementById('recv-status').innerHTML =
-            '✅ 校验通过！图片已显示';
+        // Base64 → 二进制字节
+        var rawBytes = base64ToUint8(b64);
+
+        // 按需解压（z=1 时解压，z=0 直接使用）
+        var originalBytes = recvMeta.compressed ? await gunzipDecompress(rawBytes) : rawBytes;
+
+        receivedBlob = new Blob([originalBytes]);
+        if (receivedUrl) URL.revokeObjectURL(receivedUrl);
+        receivedUrl = URL.createObjectURL(receivedBlob);
+
+        var fileName = recvMeta.name || 'download';
+        var ext = fileName.split('.').pop().toLowerCase();
+
+        // 显示文件信息区域
+        document.getElementById('file-link').style.display = 'block';
+        document.getElementById('action-btns').style.display = 'flex';
+
+        // 隐藏所有预览
+        document.getElementById('img-preview').style.display = 'none';
+        document.getElementById('txt-preview').style.display = 'none';
+
+        // 根据文件类型显示不同预览
+        if (['jpg', 'jpeg', 'png', 'bmp', 'gif', 'webp', 'svg'].indexOf(ext) !== -1)
+        {
+            // 图片 — 直接显示
+            var imgEl = document.getElementById('preview-img');
+            imgEl.src = receivedUrl;
+            document.getElementById('img-preview').style.display = 'block';
+            document.getElementById('recv-status').innerHTML =
+                '✅ 完成！图片已显示';
+        }
+        else if (['txt', 'md', 'json', 'csv', 'xml', 'html', 'css', 'js'].indexOf(ext) !== -1 || !ext)
+        {
+            // 文本 — 从原始字节解码显示
+            var decoder = new TextDecoder('utf-8');
+            var textContent = decoder.decode(originalBytes);
+            // 缓存完整文本供复制用（避免从 blob 重读导致编码偏差）
+            receivedTextCache = textContent;
+            var txtEl = document.getElementById('preview-txt');
+            txtEl.textContent = textContent.substring(0, 50000);
+            document.getElementById('txt-preview').style.display = 'block';
+            document.getElementById('recv-status').innerHTML =
+                '✅ 完成！文本内容如下';
+        }
+        else
+        {
+            // 其他类型 — 只显示下载按钮
+            document.getElementById('recv-status').innerHTML =
+                '✅ 完成！' + fileName;
+        }
+
+        // 根据类型控制按钮显示
+        var isText = ['txt', 'md', 'json', 'csv', 'xml', 'html', 'css', 'js', 'log', 'ini', 'cfg', 'yml', 'yaml', 'toml', 'sh', 'bat', 'py', 'c', 'cpp', 'h', 'java', 'ts'].indexOf(ext) !== -1 || !ext;
+        document.querySelector('#action-btns .apple-btn[onclick="doCopy()"]').style.display =
+            isText ? '' : 'none';
+
+        document.getElementById('receive-progress').textContent = '✅ Done';
     }
-    else if (['txt', 'md', 'json', 'csv', 'xml', 'html', 'css', 'js'].indexOf(ext) !== -1 || !ext)
+    catch (decompressErr)
     {
-        // 文本 — 显示内容
-        var textContent = binary; // atob后的纯文本
-        try { textContent = decodeURIComponent(escape(textContent)); } catch(e) {}
-        var txtEl = document.getElementById('preview-txt');
-        txtEl.textContent = textContent.substring(0, 50000); // 限制显示长度
-        document.getElementById('txt-preview').style.display = 'block';
         document.getElementById('recv-status').innerHTML =
-            '✅ 校验通过！文本内容如下';
+            '❌ 解压失败！' + decompressErr.message;
     }
-    else
-    {
-        // 其他类型 — 只显示下载按钮
-        document.getElementById('recv-status').innerHTML =
-            '✅ 校验通过！' + fileName;
-    }
-
-    // 根据类型控制按钮显示
-    var isText = ['txt', 'md', 'json', 'csv', 'xml', 'html', 'css', 'js', 'log', 'ini', 'cfg', 'yml', 'yaml', 'toml', 'sh', 'bat', 'py', 'c', 'cpp', 'h', 'java', 'ts'].indexOf(ext) !== -1 || !ext;
-
-    document.querySelector('#action-btns .apple-btn[onclick="doCopy()"]').style.display =
-        isText ? '' : 'none';
-
-    document.getElementById('receive-progress').textContent = '✅ Done';
 }
 
 // 接收到的文本缓存，用于复制
