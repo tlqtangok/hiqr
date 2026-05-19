@@ -119,6 +119,13 @@ The page opens automatically in **Receive Mode** on mobile browsers.
 
 ---
 
+## Recent Updates
+
+- Receive mode now includes a **Rescan** button to discard all scanned frames and restart scanning.
+- Send mode keeps the Chrome-side two-row control layout and auto-starts QR playback after generation.
+
+---
+
 ## License
 
 [MIT](LICENSE)
@@ -137,6 +144,6 @@ The page opens automatically in **Receive Mode** on mobile browsers.
 
 If you find hiqr useful, feel free to buy me a coffee ☕
 
-<img src="img/jd_reward_code_small.png" alt="WeChat Reward Code" width="400"/>
+<img src="img/jd_reward_code_small.jpg" alt="WeChat Reward Code" width="400"/>
 
 *WeChat Reward Code*

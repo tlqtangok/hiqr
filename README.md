@@ -119,6 +119,13 @@
 
 ---
 
+## Recent Updates
+
+- Receive mode now includes a **重新扫码** button to discard all scanned frames and restart scanning.
+- Send mode keeps the Chrome-side two-row control layout and auto-starts QR playback after generation.
+
+---
+
 ## 许可证
 
 [MIT](LICENSE)
@@ -137,6 +144,6 @@
 
 如果hiqr对您有帮助，欢迎请我喝杯咖啡 ☕
 
-<img src="img/jd_reward_code_small.png" alt="WeChat Reward Code" width="400"/>
+<img src="img/jd_reward_code_small.jpg" alt="WeChat Reward Code" width="400"/>
 
 *微信赞赏码*
