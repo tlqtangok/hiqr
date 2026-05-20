@@ -13,6 +13,7 @@
   - [发送模式（电脑端）](#发送模式电脑端)
   - [接收模式（手机端）](#接收模式手机端)
 - [技术细节](#技术细节)
+- [致谢](#致谢)
 - [许可证](#许可证)
 - [作者](#作者)
 - [支持](#支持)
@@ -123,6 +124,22 @@
 
 - Receive mode now includes a **重新扫码** button to discard all scanned frames and restart scanning.
 - Send mode keeps the Chrome-side two-row control layout and auto-starts QR playback after generation.
+
+---
+
+## 致谢
+
+hiqr 内嵌了以下优秀的开源项目（均以 MIT 许可证授权），无需任何外部网络即可运行：
+
+| 库 | 用途 | 仓库 |
+|----|------|------|
+| [qrcode.js](https://github.com/davidshimjs/qrcodejs) by davidshimjs | QR 码生成（发送端编码） | github.com/davidshimjs/qrcodejs |
+| [jsQR](https://github.com/cozmo/jsQR) by Cosmo Wolfe | QR 码解码（接收端摄像头扫描） | github.com/cozmo/jsQR |
+
+此外，以下算法/规范的纯 JS 实现由本项目自行编写：
+
+- **CRC32**（多项式 `0xEDB88320`，公有领域标准算法）— 用于传输完整性校验
+- **inflateRawJS**（RFC 1951 deflate-raw）— 用于在 Safari 等不支持 `DecompressionStream('deflate-raw')` 的浏览器上作为 fallback 解压缩
 
 ---
 

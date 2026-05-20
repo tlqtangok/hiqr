@@ -13,6 +13,7 @@ Transfer any files via a continuous QR code stream — **no dependencies, totall
   - [Send Mode (Desktop)](#send-mode-desktop)
   - [Receive Mode (Mobile)](#receive-mode-mobile)
 - [Technical Details](#technical-details)
+- [Acknowledgements](#acknowledgements)
 - [License](#license)
 - [Author](#author)
 - [Support](#support)
@@ -123,6 +124,22 @@ The page opens automatically in **Receive Mode** on mobile browsers.
 
 - Receive mode now includes a **Rescan** button to discard all scanned frames and restart scanning.
 - Send mode keeps the Chrome-side two-row control layout and auto-starts QR playback after generation.
+
+---
+
+## Acknowledgements
+
+hiqr embeds the following excellent open-source projects (all MIT-licensed), so it runs with zero external network access:
+
+| Library | Purpose | Repository |
+|---------|---------|------------|
+| [qrcode.js](https://github.com/davidshimjs/qrcodejs) by davidshimjs | QR code generation (sender encoding) | github.com/davidshimjs/qrcodejs |
+| [jsQR](https://github.com/cozmo/jsQR) by Cosmo Wolfe | QR code decoding (receiver camera scan) | github.com/cozmo/jsQR |
+
+The following algorithms are implemented in pure JS by this project itself:
+
+- **CRC32** (polynomial `0xEDB88320`, public-domain standard) — used for transfer integrity verification
+- **inflateRawJS** (RFC 1951 deflate-raw) — used as a fallback decompressor on browsers (e.g. Safari) that don't support `DecompressionStream('deflate-raw')`
 
 ---
 
