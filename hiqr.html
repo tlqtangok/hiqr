@@ -11225,7 +11225,8 @@ function doDownload()
     var _A = {
         'ujis1h':{lv:'vip0',ph:'i2cm7m'},                          // test/test (测试账户)
         'oxx0nh':{lv:'vip1',ph:'1q8ccar'},                          // jd/pw  (永久)
-        '1uybzsb':{lv:'vip1',exp:'20260622',derived:true}           // vip1test (到期 2026-06-22)
+        '1uybzsb':{lv:'vip1',exp:'20260622',derived:true},          // vip1test (到期 2026-06-22)
+        '1ljbn8d':{lv:'vip1',exp:'20260622',derived:true}           // jd0 (到期 2026-06-22)
     };
     window._authLevel = null;
     window._vipExpiry = null;
@@ -11244,7 +11245,7 @@ function doDownload()
             var dl=_daysLeft(acc.exp);
             if(dl<=0) return 'expired';
             if(_h(_derivePw(u,acc.exp)+_S+'pw')!==_h(p+_S+'pw')) return null;
-            window._vipExpiry = dl<=7 ? {exp:acc.exp, daysLeft:dl, fmtDate:_fmt(acc.exp)} : null;
+            window._vipExpiry = {exp:acc.exp, daysLeft:dl, fmtDate:_fmt(acc.exp)};
             return acc.lv;
         }
         if(_h(p+_S+'pw')!==acc.ph) return null;
@@ -11267,7 +11268,7 @@ function doDownload()
             if(x){
                 var dl=_daysLeft(x);
                 if(dl<=0){ window._clearSession(); return null; }
-                window._vipExpiry = dl<=7 ? {exp:x, daysLeft:dl, fmtDate:_fmt(x)} : null;
+                window._vipExpiry = {exp:x, daysLeft:dl, fmtDate:_fmt(x)};
             } else { window._vipExpiry=null; }
             return obj.r;
         }catch(e){ return null; }
@@ -11285,6 +11286,11 @@ function showMainApp(lv)
         document.getElementById('vip1-exp-date').textContent = window._vipExpiry.fmtDate;
         document.getElementById('vip1-days-left').textContent = window._vipExpiry.daysLeft;
         vip1b.style.display = 'block';
+        // Urgent red style when ≤ 7 days, amber otherwise
+        var urgent = window._vipExpiry.daysLeft <= 7;
+        vip1b.style.background = urgent ? 'rgba(255,241,240,0.75)' : '';
+        vip1b.style.borderBottomColor = urgent ? 'rgba(255,100,80,0.5)' : '';
+        vip1b.style.color = urgent ? '#cf1322' : '';
     } else {
         vip1b.style.display = 'none';
     }
