@@ -11300,9 +11300,16 @@ function doDownload()
         var _uk=_h(u+_S),_ac=_A[_uk];
         if(_ac){if(_h(p+_S+'pw')!==_ac.ph)return null;window._vipExpiry=null;return _ac.lv;}
         var _rg=_rld(),_re=_rg[_uk];
+        // Permanently dead (expired and flagged) — reject any future login attempt
+        if(_re&&_re.d) return 'expired';
         if(_re&&_re.x&&_re.v&&_h(_uk+':'+_re.x+_T)===_re.v){
             var _dl=_daysLeft(_re.x);
-            if(_dl<=0)return 'expired';
+            if(_dl<=0){
+                // Brand the entry as dead so re-registration is blocked
+                _re.d=1; _rg[_uk]=_re;
+                try{localStorage.setItem(_KR,JSON.stringify(_rg));}catch(e){}
+                return 'expired';
+            }
             if(_dc(u,_re.x)!==p)return null;
             window._vipExpiry={exp:_re.x,daysLeft:_dl,fmtDate:_fmt(_re.x)};return 'vip1';
         }
@@ -11358,7 +11365,7 @@ function doLogin()
     errEl.textContent = '';
     if (!u || !p) { errEl.textContent = '请输入用户名和密码'; return; }
     var lv = window._verifyLogin(u, p);
-    if (lv === 'expired') { errEl.textContent = '⚠️ 此账户已过期，请联系作者续期'; return; }
+    if (lv === 'expired') { errEl.textContent = '⛔ 此账户已过期，请联系作者重新订阅月度服务'; return; }
     if (!lv) { errEl.textContent = '❌ 用户名或密码错误'; return; }
     window._saveSession(lv);
     window._authLevel = lv;
