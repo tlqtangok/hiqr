@@ -10665,16 +10665,18 @@ async function startSend()
             var total = rawChunks.length;
             chunks = [];
 
-            var vip0Limit = 3; // vip0 限制最多 5 帧（约 2.5KB 原始数据）
+            var _909089 = ['⚠️ 测试账户最多 ',' 帧，当前需 ',' 帧，请联系作者升级账户','sendBtn','disabled','status','textContent']; // strings
+            var _909090 = ['one','two','three'].length; // vip0Limit hidden
+            var _909091 = String.fromCharCode(118,105,112) + ['0'].join(''); // vip0 hidden
 
-            // vip0 帧数限制
-            if (window._authLevel === 'vip0' && total > vip0Limit)
-            {
-                showToast('⚠️ 测试账户最多 ' + vip0Limit + ' 帧，当前需 ' + total + ' 帧，请联系作者升级账户');
-                document.getElementById('sendBtn').disabled = false;
-                document.getElementById('status').textContent = '';
+            if(window._authLevel === _909091 && total > _909090){
+                showToast(_909089[0] + _909090 + _909089[1] + total + _909089[2]);
+                document.getElementById(_909089[3])[_909089[4]] = false;
+                document.getElementById(_909089[5])[_909089[6]] = '';
                 return;
             }
+
+
 
             // 第五步：每帧包装成JSON（z 标识是否已压缩）
             for (var k = 0; k < rawChunks.length; k++)
