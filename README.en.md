@@ -6,6 +6,7 @@ Transfer any files via a continuous QR code stream — **no dependencies, totall
 
 ## Table of Contents
 
+- [🔑 Accounts & Access](#-accounts--access)
 - [Features](#features)
 - [How It Works](#how-it-works)
 - [Quick Start](#quick-start)
@@ -17,6 +18,27 @@ Transfer any files via a continuous QR code stream — **no dependencies, totall
 - [License](#license)
 - [Author](#author)
 - [Support](#support)
+
+---
+
+## 🔑 Accounts & Access
+
+> A login is required when you first open hiqr.html. Your session is saved for 7 days.
+
+| Account | Username | Password | Limits |
+|---------|----------|----------|--------|
+| vip0 (trial) | `test` | `test` | Max **5 frames** per transfer |
+| vip1 (full) | Contact the author | — | Unlimited |
+
+> ⚠️ **vip0 trial limitations:** At most 5 QR frames per transfer — suitable for small files and testing. Attempting to generate more than 5 frames will show a warning and block generation.
+
+### How to Upgrade to vip1
+
+1. Email the author: [tlqtangok@126.com](mailto:tlqtangok@126.com)
+2. Scan the WeChat QR below and donate **¥5**
+3. Mention "apply for vip1" in the email — the author will reply with your credentials
+
+<img src="img/jd_reward_code_small.jpg" alt="WeChat Reward Code" width="200"/>
 
 ---
 
