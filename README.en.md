@@ -167,7 +167,7 @@ The following algorithms are implemented in pure JS by this project itself:
 
 ## License
 
-[MIT](LICENSE)
+[GPLv3](LICENSE)
 
 ---
 

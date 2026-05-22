@@ -79,6 +79,7 @@ img[alt="微信赞赏码"] { width: 270px !important; height: auto !important; }
 .auth-qr:hover { opacity:1;transform:scale(1.06); }
 .auth-qlb { font-size:.76em;color:#aeaeb2;margin-top:4px; }
 #vip0-banner { display:none;width:100%;background:rgba(255,241,240,0.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1.5px solid rgba(255,204,199,0.6);text-align:center;padding:6px 14px;font-size:.8em;color:#cf1322;font-weight:500;position:sticky;top:0;z-index:150;letter-spacing:.01em; }
+    #vip1-banner { display:none;width:100%;background:rgba(255,248,220,0.75);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1.5px solid rgba(255,200,60,0.5);text-align:center;padding:6px 14px;font-size:.8em;color:#7a5000;font-weight:500;position:sticky;top:0;z-index:149;letter-spacing:.01em; }
 #logout-btn { background:rgba(0,0,0,.56);color:#fff;border:none;border-radius:8px;padding:7px 13px;font-size:.82em;cursor:pointer;font-family:inherit;display:none; }
 #logout-btn:hover { background:rgba(0,0,0,.78); }
 #top-btns { position:fixed;top:12px;right:12px;display:flex;gap:8px;align-items:center;z-index:600; }
@@ -92,6 +93,7 @@ img[alt="微信赞赏码"] { width: 270px !important; height: auto !important; }
 
 <!-- VIP0 限制条幅 -->
 <div id="vip0-banner">⚠️ 当前为测试账户 (vip0)，最多支持 <strong>5 帧</strong> QR 码 — 如需无限制请联系作者升级</div>
+<div id="vip1-banner">⏰ 您的 vip1 会员将于 <strong id="vip1-exp-date"></strong> 到期，还剩 <strong id="vip1-days-left"></strong> 天，到期后请联系作者续期</div>
 
 <!-- QR 放大灯箱 -->
 <div id="qr-lightbox" onclick="this.classList.remove('show')">
@@ -11219,17 +11221,40 @@ function doDownload()
     function _h(s){ var h=5381; for(var i=0;i<s.length;i++) h=(((h<<5)+h)^s.charCodeAt(i))>>>0; return h.toString(36); }
     var _S='!hq24x', _T=':hqsig', _K='hiqr_ss', _TTL=7*24*3600*1000;
     // 预计算哈希（代码中不出现明文用户名/密码）
-    var _A = { 'ujis1h':{lv:'vip0',ph:'i2cm7m'}, 'oxx0nh':{lv:'vip1',ph:'1q8ccar'} };
+    // derived:true 账户的密码由 btoa(user+expDate+'\n').replace(/[^a-z]/g,'') 动态推导，过期即失效
+    var _A = {
+        'ujis1h':{lv:'vip0',ph:'i2cm7m'},                          // test/test (测试账户)
+        'oxx0nh':{lv:'vip1',ph:'1q8ccar'},                          // jd/pw  (永久)
+        '1uybzsb':{lv:'vip1',exp:'20260622',derived:true}           // vip1test (到期 2026-06-22)
+    };
     window._authLevel = null;
+    window._vipExpiry = null;
+    function _expDate(s){ return new Date(+s.slice(0,4), +s.slice(4,6)-1, +s.slice(6,8)); }
+    function _daysLeft(s){
+        var n=new Date(); n.setHours(0,0,0,0);
+        var e=_expDate(s); e.setHours(0,0,0,0);
+        return Math.ceil((e-n)/864e5);
+    }
+    function _fmt(s){ return s.slice(0,4)+'年'+s.slice(4,6)+'月'+s.slice(6,8)+'日'; }
+    function _derivePw(user,exp){ return btoa(user+exp+'\n').replace(/[^a-z]/g,''); }
     window._verifyLogin = function(u,p){
         var uk=_h(u+_S), acc=_A[uk];
         if(!acc) return null;
+        if(acc.derived){
+            var dl=_daysLeft(acc.exp);
+            if(dl<=0) return 'expired';
+            if(_h(_derivePw(u,acc.exp)+_S+'pw')!==_h(p+_S+'pw')) return null;
+            window._vipExpiry = dl<=7 ? {exp:acc.exp, daysLeft:dl, fmtDate:_fmt(acc.exp)} : null;
+            return acc.lv;
+        }
         if(_h(p+_S+'pw')!==acc.ph) return null;
+        window._vipExpiry = null;
         return acc.lv;
     };
     window._saveSession = function(lv){
-        var exp=Date.now()+_TTL, sig=_h(lv+':'+exp.toString(36)+_T);
-        try{ localStorage.setItem(_K,JSON.stringify({r:lv,e:exp,s:sig})); }catch(e){}
+        var exp=Date.now()+_TTL, x=window._vipExpiry?window._vipExpiry.exp:'';
+        var sig=_h(lv+':'+exp.toString(36)+':'+x+_T);
+        try{ localStorage.setItem(_K,JSON.stringify({r:lv,e:exp,s:sig,x:x})); }catch(e){}
     };
     window._loadSession = function(){
         try{
@@ -11237,7 +11262,13 @@ function doDownload()
             var obj=JSON.parse(raw);
             if(!obj||!obj.r||!obj.e||!obj.s) return null;
             if(obj.e<Date.now()) return null;
-            if(_h(obj.r+':'+obj.e.toString(36)+_T)!==obj.s) return null;
+            var x=obj.x||'';
+            if(_h(obj.r+':'+obj.e.toString(36)+':'+x+_T)!==obj.s) return null;
+            if(x){
+                var dl=_daysLeft(x);
+                if(dl<=0){ window._clearSession(); return null; }
+                window._vipExpiry = dl<=7 ? {exp:x, daysLeft:dl, fmtDate:_fmt(x)} : null;
+            } else { window._vipExpiry=null; }
             return obj.r;
         }catch(e){ return null; }
     };
@@ -11249,6 +11280,14 @@ function showMainApp(lv)
     document.getElementById('auth-overlay').style.display = 'none';
     document.getElementById('logout-btn').style.display = 'block';
     document.getElementById('vip0-banner').style.display = lv === 'vip0' ? 'block' : 'none';
+    var vip1b = document.getElementById('vip1-banner');
+    if (window._vipExpiry) {
+        document.getElementById('vip1-exp-date').textContent = window._vipExpiry.fmtDate;
+        document.getElementById('vip1-days-left').textContent = window._vipExpiry.daysLeft;
+        vip1b.style.display = 'block';
+    } else {
+        vip1b.style.display = 'none';
+    }
 }
 
 function doLogin()
@@ -11259,6 +11298,7 @@ function doLogin()
     errEl.textContent = '';
     if (!u || !p) { errEl.textContent = '请输入用户名和密码'; return; }
     var lv = window._verifyLogin(u, p);
+    if (lv === 'expired') { errEl.textContent = '⚠️ 此账户已过期，请联系作者续期'; return; }
     if (!lv) { errEl.textContent = '❌ 用户名或密码错误'; return; }
     window._saveSession(lv);
     window._authLevel = lv;
@@ -11269,9 +11309,11 @@ function doLogout()
 {
     window._clearSession();
     window._authLevel = null;
+    window._vipExpiry = null;
     document.getElementById('auth-overlay').style.display = 'flex';
     document.getElementById('logout-btn').style.display = 'none';
     document.getElementById('vip0-banner').style.display = 'none';
+    document.getElementById('vip1-banner').style.display = 'none';
     document.getElementById('auth-user').value = '';
     document.getElementById('auth-pass').value = '';
     document.getElementById('auth-err').textContent = '';
