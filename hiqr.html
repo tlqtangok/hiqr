@@ -59,9 +59,54 @@ img[alt="微信赞赏码"] { width: 270px !important; height: auto !important; }
 .apple-btn-secondary:hover { background: rgba(0,0,0,0.08); }
 .ctrl-row { display: flex; gap: 4%; margin-top: 8px; }
 .ctrl-row .btn { flex: 1; width: auto; display: block; margin-top: 0; }
+/* ===== 登录鉴权 ===== */
+#auth-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.42);z-index:9000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);padding:20px; }
+#auth-card { background:rgba(255,255,255,0.97);border-radius:26px;padding:42px 34px 34px;width:100%;max-width:380px;box-shadow:0 24px 64px rgba(0,0,0,0.28),0 1px 0 rgba(255,255,255,0.9) inset;display:flex;flex-direction:column;align-items:center; }
+.auth-logo { font-size:2.8em;margin-bottom:6px; }
+.auth-title { font-size:1.65em;font-weight:700;color:#1d1d1f;letter-spacing:-0.04em;margin-bottom:3px; }
+.auth-sub { color:#86868b;font-size:0.87em;margin-bottom:30px;letter-spacing:0.01em; }
+.auth-field { width:100%;margin-bottom:11px;background:#f5f5f7;border:1.5px solid transparent;border-radius:13px;padding:14px 16px;font-size:1em;color:#1d1d1f;outline:none;transition:border-color .2s,box-shadow .2s,background .2s;font-family:inherit; }
+.auth-field:focus { border-color:#0071e3;box-shadow:0 0 0 3px rgba(0,113,227,.15);background:#fff; }
+#auth-btn { width:100%;margin-top:8px;background:#0071e3;color:#fff;border:none;border-radius:13px;padding:15px;font-size:1.06em;font-weight:600;cursor:pointer;transition:background .2s,transform .12s;font-family:inherit;letter-spacing:-.01em; }
+#auth-btn:hover { background:#0077ed; }
+#auth-btn:active { transform:scale(.97); }
+#auth-err { color:#ff3b30;font-size:0.85em;margin-top:9px;min-height:1.1em;text-align:center; }
+.auth-div { width:100%;height:1px;background:#e5e5ea;margin:24px 0; }
+.auth-info { width:100%;text-align:center;color:#86868b;font-size:0.82em;line-height:2; }
+.auth-info strong { color:#1d1d1f; }
+.auth-info a { color:#0071e3;text-decoration:none; }
+.auth-qr { width:112px;height:auto;border-radius:11px;margin-top:10px;opacity:.93; }
+.auth-qlb { font-size:.76em;color:#aeaeb2;margin-top:4px; }
+#vip0-banner { display:none;width:100%;background:linear-gradient(90deg,#fff1f0,#fff8f6);border-bottom:1.5px solid #ffccc7;text-align:center;padding:6px 14px;font-size:.8em;color:#cf1322;font-weight:500;position:sticky;top:0;z-index:500;letter-spacing:.01em; }
+#logout-btn { position:fixed;top:12px;left:12px;background:rgba(0,0,0,.56);color:#fff;border:none;border-radius:8px;padding:7px 13px;font-size:.82em;cursor:pointer;z-index:200;font-family:inherit;display:none; }
+#logout-btn:hover { background:rgba(0,0,0,.78); }
 </style>
 </head>
 <body>
+
+<!-- VIP0 限制条幅 -->
+<div id="vip0-banner">⚠️ 当前为测试账户 (vip0)，最多支持 <strong>5 帧</strong> QR 码 — 如需无限制请联系作者升级</div>
+
+<!-- 登录鉴权遮罩 -->
+<div id="auth-overlay">
+  <div id="auth-card">
+    <div class="auth-logo">📱</div>
+    <div class="auth-title">hiqr</div>
+    <div class="auth-sub">QR 文件传输 &nbsp;·&nbsp; 请先登录</div>
+    <input class="auth-field" id="auth-user" type="text" placeholder="用户名" autocomplete="username" autocorrect="off" autocapitalize="none" spellcheck="false">
+    <input class="auth-field" id="auth-pass" type="password" placeholder="密码" autocomplete="current-password">
+    <button id="auth-btn" onclick="doLogin()">登 录</button>
+    <div id="auth-err"></div>
+    <div class="auth-div"></div>
+    <div class="auth-info">
+      <strong>Jidor Tang</strong><br>
+      <a href="mailto:tlqtangok@126.com">tlqtangok@126.com</a><br>
+      <span style="font-size:.78em;color:#aeaeb2;margin-top:2px;display:block;">联系作者开通 / 升级账户</span>
+      <img class="auth-qr" src="img/jd_reward_code_small.jpg" alt="赞赏码">
+      <div class="auth-qlb">扫码赞赏 / 联系作者 ☕</div>
+    </div>
+  </div>
+</div>
 
 <button class="switch-btn" onclick="switchMode()">切换模式</button>
 
@@ -10603,6 +10648,15 @@ async function startSend()
             var total = rawChunks.length;
             chunks = [];
 
+            // vip0 帧数限制
+            if (window._authLevel === 'vip0' && total > 5)
+            {
+                showToast('⚠️ 测试账户最多 5 帧，当前需 ' + total + ' 帧，请联系作者升级账户');
+                document.getElementById('sendBtn').disabled = false;
+                document.getElementById('status').textContent = '';
+                return;
+            }
+
             // 第五步：每帧包装成JSON（z 标识是否已压缩）
             for (var k = 0; k < rawChunks.length; k++)
             {
@@ -11142,6 +11196,83 @@ function doDownload()
     a.click();
     document.body.removeChild(a);
 }
+
+// ============ 用户鉴权 ============
+!function()
+{
+    // djb2 变体 —— 单向哈希，不可逆（无明文凭证存储）
+    function _h(s){ var h=5381; for(var i=0;i<s.length;i++) h=(((h<<5)+h)^s.charCodeAt(i))>>>0; return h.toString(36); }
+    var _S='!hq24x', _T=':hqsig', _K='hiqr_ss', _TTL=7*24*3600*1000;
+    // 预计算哈希（代码中不出现明文用户名/密码）
+    var _A = { 'ujis1h':{lv:'vip0',ph:'i2cm7m'}, 'oxx0nh':{lv:'vip1',ph:'1q8ccar'} };
+    window._authLevel = null;
+    window._verifyLogin = function(u,p){
+        var uk=_h(u+_S), acc=_A[uk];
+        if(!acc) return null;
+        if(_h(p+_S+'pw')!==acc.ph) return null;
+        return acc.lv;
+    };
+    window._saveSession = function(lv){
+        var exp=Date.now()+_TTL, sig=_h(lv+':'+exp.toString(36)+_T);
+        try{ localStorage.setItem(_K,JSON.stringify({r:lv,e:exp,s:sig})); }catch(e){}
+    };
+    window._loadSession = function(){
+        try{
+            var raw=localStorage.getItem(_K); if(!raw) return null;
+            var obj=JSON.parse(raw);
+            if(!obj||!obj.r||!obj.e||!obj.s) return null;
+            if(obj.e<Date.now()) return null;
+            if(_h(obj.r+':'+obj.e.toString(36)+_T)!==obj.s) return null;
+            return obj.r;
+        }catch(e){ return null; }
+    };
+    window._clearSession = function(){ try{ localStorage.removeItem(_K); }catch(e){} };
+}();
+
+function showMainApp(lv)
+{
+    document.getElementById('auth-overlay').style.display = 'none';
+    document.getElementById('logout-btn').style.display = 'block';
+    document.getElementById('vip0-banner').style.display = lv === 'vip0' ? 'block' : 'none';
+}
+
+function doLogin()
+{
+    var u = document.getElementById('auth-user').value.trim();
+    var p = document.getElementById('auth-pass').value;
+    var errEl = document.getElementById('auth-err');
+    errEl.textContent = '';
+    if (!u || !p) { errEl.textContent = '请输入用户名和密码'; return; }
+    var lv = window._verifyLogin(u, p);
+    if (!lv) { errEl.textContent = '❌ 用户名或密码错误'; return; }
+    window._saveSession(lv);
+    window._authLevel = lv;
+    showMainApp(lv);
+}
+
+function doLogout()
+{
+    window._clearSession();
+    window._authLevel = null;
+    document.getElementById('auth-overlay').style.display = 'flex';
+    document.getElementById('logout-btn').style.display = 'none';
+    document.getElementById('vip0-banner').style.display = 'none';
+    document.getElementById('auth-user').value = '';
+    document.getElementById('auth-pass').value = '';
+    document.getElementById('auth-err').textContent = '';
+    if (typeof stopAutoPlay === 'function') stopAutoPlay();
+    if (typeof stopCamera === 'function') stopCamera();
+}
+
+// 初始化：检查本地会话
+(function initAuth()
+{
+    var lv = window._loadSession();
+    if (lv) { window._authLevel = lv; showMainApp(lv); }
+    // 回车键快捷操作
+    document.getElementById('auth-user').addEventListener('keydown', function(e){ if(e.key==='Enter') document.getElementById('auth-pass').focus(); });
+    document.getElementById('auth-pass').addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin(); });
+})();
 </script>
 </body>
 </html>
