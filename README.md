@@ -34,9 +34,9 @@
 
 ### 如何升级到 vip1？
 
-1. 发邮件至作者：[tlqtangok@126.com](mailto:tlqtangok@126.com)
+1. 发邮件至作者：[tlqtangok@126.com](mailto:tlqtangok@126.com) 或者添加作者微信（微信号 `tlqtangok`)
 2. 扫描下方微信赞赏码，赞助 **¥5**
-3. 邮件中注明"申请 vip1 账号"，作者收到后将提供专属账号
+3. 邮件中注明"申请 vip1 账号, 账号名:ponyma"，作者收到后将提供专属账号
 
 <img src="img/jd_reward_code_small.jpg" alt="WeChat Reward Code" width="200"/>
 
