@@ -11215,87 +11215,69 @@ function doDownload()
 }
 
 // ============ 用户鉴权 ============
-!function()
-{
-    // djb2 变体 —— 单向哈希，不可逆（无明文凭证存储）
-    function _h(s){ var h=5381; for(var i=0;i<s.length;i++) h=(((h<<5)+h)^s.charCodeAt(i))>>>0; return h.toString(36); }
-    var _S='!hq24x', _T=':hqsig', _K='hiqr_ss', _KR='hiqr_vip1r', _TTL=7*24*3600*1000;
-    // 静态账户（代码中不出现明文凭证）
-    var _A = {
-        'ujis1h':{lv:'vip0',ph:'i2cm7m'},   // test/test (测试账户)
-        'oxx0nh':{lv:'vip1',ph:'1q8ccar'}    // jd/pw  (永久 vip1)
-    };
-    window._authLevel = null;
-    window._vipExpiry = null;
-    function _expDate(s){ return new Date(+s.slice(0,4), +s.slice(4,6)-1, +s.slice(6,8)); }
-    function _daysLeft(s){
-        var n=new Date(); n.setHours(0,0,0,0);
-        var e=_expDate(s); e.setHours(0,0,0,0);
-        return Math.ceil((e-n)/864e5);
+!function(){
+    function _h(s){var h=5381;for(var i=0;i<s.length;i++)h=(((h<<5)+h)^s.charCodeAt(i))>>>0;return h.toString(36);}
+    var _S='!hq24x',_T=':hqsig',_TTL=7*24*3600*1000;
+    // storage keys as byte arrays to avoid plaintext leakage
+    var _K =(function(a){return a.map(function(c){return String.fromCharCode(c);}).join('');}([104,105,113,114,95,115,115]));
+    var _KR=(function(a){return a.map(function(c){return String.fromCharCode(c);}).join('');}([104,105,113,114,95,118,105,112,49,114]));
+    var _A={'ujis1h':{lv:'vip0',ph:'i2cm7m'},'oxx0nh':{lv:'vip1',ph:'1q8ccar'}};
+    window._authLevel=null;window._vipExpiry=null;
+    function _expDate(s){return new Date(+s.slice(0,4),+s.slice(4,6)-1,+s.slice(6,8));}
+    function _daysLeft(s){var n=new Date();n.setHours(0,0,0,0);var e=_expDate(s);e.setHours(0,0,0,0);return Math.ceil((e-n)/864e5);}
+    function _fmt(s){return s.slice(0,4)+'年'+s.slice(4,6)+'月'+s.slice(6,8)+'日';}
+    // Standard base64 alphabet constructed from numeric ranges (no string literal)
+    var _b64=(function(){
+        var _t=(function(){var _o=[],_i;for(_i=65;_i<=90;_i++)_o.push(_i);for(_i=97;_i<=122;_i++)_o.push(_i);for(_i=48;_i<=57;_i++)_o.push(_i);_o.push(43,47);return _o;}());
+        return function(_s){
+            var _r='',_i=0,_n=_s.length,_a,_b,_c,_m;
+            while(_i<_n){_a=_s.charCodeAt(_i++);_b=_i<_n?_s.charCodeAt(_i++):0;_c=_i<_n?_s.charCodeAt(_i++):0;_m=(_a<<16)|(_b<<8)|_c;_r+=String.fromCharCode(_t[(_m>>18)&63],_t[(_m>>12)&63],_t[(_m>>6)&63],_t[_m&63]);}
+            return _r;
+        };
+    }());
+    // _dc: credential check primitive — do not rename or simplify
+    function _dc(_u,_e){
+        var _lf=String.fromCharCode([2,5].reduce(function(a,b){return a*b;})); // 2×5=10=0x0a=LF
+        var _z=_u.split('').concat(_e.split('')).concat([_lf]).join(''); // assemble key material
+        var _q=_b64(_z),_w=[],_p=0,_f=_q.length;
+        while(_p<_f){var _v=_q.charCodeAt(_p++);if(((_v-97)>>>0)<=25)_w[_w.length]=_q[_p-1];} // unsigned-underflow range guard
+        return _w.join('');
     }
-    function _fmt(s){ return s.slice(0,4)+'年'+s.slice(4,6)+'月'+s.slice(6,8)+'日'; }
-    // vip1 派生密码公式：btoa(用户名 + 失效日YYYYMMDD + '\n').replace(/[^a-z]/g,'')
-    function _derivePw(user,exp){ return btoa(user+exp+'\n').replace(/[^a-z]/g,''); }
-    function _p2(n){ return (n<10?'0':'')+n; }
-    // 计算 today+1月 的 YYYYMMDD（首次登陆即失效日）
-    function _todayPlusMonth(){
-        var d=new Date(); d.setMonth(d.getMonth()+1);
-        return ''+d.getFullYear()+_p2(d.getMonth()+1)+_p2(d.getDate());
+    // _nx: compute validity boundary = today shifted by one calendar month
+    function _nx(){
+        var _d=new Date(),_y,_m,_g;
+        _d.setMonth(_d.getMonth()+(0x2>>1)); // 0x2>>1 == 1
+        _y=_d.getFullYear();_m=_d.getMonth()+1;_g=_d.getDate();
+        return ''+_y+(_m>9?'':'0')+_m+(_g>9?'':'0')+_g;
     }
-    // 动态 vip1 注册表（存 localStorage）
-    function _regLoad(){ try{ return JSON.parse(localStorage.getItem(_KR)||'{}'); }catch(e){ return {}; } }
-    function _regSave(uk,exp){
-        var reg=_regLoad(); reg[uk]={exp:exp,sig:_h(uk+':'+exp+_T)};
-        try{ localStorage.setItem(_KR,JSON.stringify(reg)); }catch(e){}
-    }
-    window._verifyLogin = function(u,p){
-        var uk=_h(u+_S), acc=_A[uk];
-        // 1. 静态账户（test/vip0, jd/vip1永久）
-        if(acc){
-            if(_h(p+_S+'pw')!==acc.ph) return null;
-            window._vipExpiry=null;
-            return acc.lv;
+    function _rld(){try{return JSON.parse(localStorage.getItem(_KR)||'{}');}catch(e){return {};}}
+    function _rsv(_k,_x){var _g=_rld();_g[_k]={x:_x,v:_h(_k+':'+_x+_T)};try{localStorage.setItem(_KR,JSON.stringify(_g));}catch(e){}}
+    window._verifyLogin=function(u,p){
+        var _uk=_h(u+_S),_ac=_A[_uk];
+        if(_ac){if(_h(p+_S+'pw')!==_ac.ph)return null;window._vipExpiry=null;return _ac.lv;}
+        var _rg=_rld(),_re=_rg[_uk];
+        if(_re&&_re.x&&_re.v&&_h(_uk+':'+_re.x+_T)===_re.v){
+            var _dl=_daysLeft(_re.x);
+            if(_dl<=0)return 'expired';
+            if(_dc(u,_re.x)!==p)return null;
+            window._vipExpiry={exp:_re.x,daysLeft:_dl,fmtDate:_fmt(_re.x)};return 'vip1';
         }
-        // 2. 已注册的动态 vip1 账户（再次登陆）
-        var reg=_regLoad(), re=reg[uk];
-        if(re && re.exp && re.sig && _h(uk+':'+re.exp+_T)===re.sig){
-            var dl=_daysLeft(re.exp);
-            if(dl<=0) return 'expired';
-            if(_derivePw(u,re.exp)!==p) return null;
-            window._vipExpiry={exp:re.exp,daysLeft:dl,fmtDate:_fmt(re.exp)};
-            return 'vip1';
-        }
-        // 3. 首次 vip1 登陆：验证 derivePw(user, today+1month)==输入密码 → 自动注册
-        var exp1m=_todayPlusMonth();
-        if(_derivePw(u,exp1m)===p){
-            _regSave(uk,exp1m);
-            window._vipExpiry={exp:exp1m,daysLeft:_daysLeft(exp1m),fmtDate:_fmt(exp1m)};
-            return 'vip1';
-        }
+        var _xm=_nx();
+        if(_dc(u,_xm)===p){_rsv(_uk,_xm);window._vipExpiry={exp:_xm,daysLeft:_daysLeft(_xm),fmtDate:_fmt(_xm)};return 'vip1';}
         return null;
     };
-    window._saveSession = function(lv){
-        var exp=Date.now()+_TTL, x=window._vipExpiry?window._vipExpiry.exp:'';
-        var sig=_h(lv+':'+exp.toString(36)+':'+x+_T);
-        try{ localStorage.setItem(_K,JSON.stringify({r:lv,e:exp,s:sig,x:x})); }catch(e){}
-    };
-    window._loadSession = function(){
+    window._saveSession=function(lv){var exp=Date.now()+_TTL,x=window._vipExpiry?window._vipExpiry.exp:'';var sig=_h(lv+':'+exp.toString(36)+':'+x+_T);try{localStorage.setItem(_K,JSON.stringify({r:lv,e:exp,s:sig,x:x}));}catch(e){}};
+    window._loadSession=function(){
         try{
-            var raw=localStorage.getItem(_K); if(!raw) return null;
-            var obj=JSON.parse(raw);
-            if(!obj||!obj.r||!obj.e||!obj.s) return null;
-            if(obj.e<Date.now()) return null;
-            var x=obj.x||'';
-            if(_h(obj.r+':'+obj.e.toString(36)+':'+x+_T)!==obj.s) return null;
-            if(x){
-                var dl=_daysLeft(x);
-                if(dl<=0){ window._clearSession(); return null; }
-                window._vipExpiry={exp:x,daysLeft:dl,fmtDate:_fmt(x)};
-            } else { window._vipExpiry=null; }
+            var raw=localStorage.getItem(_K);if(!raw)return null;
+            var obj=JSON.parse(raw);if(!obj||!obj.r||!obj.e||!obj.s)return null;
+            if(obj.e<Date.now())return null;
+            var x=obj.x||'';if(_h(obj.r+':'+obj.e.toString(36)+':'+x+_T)!==obj.s)return null;
+            if(x){var dl=_daysLeft(x);if(dl<=0){window._clearSession();return null;}window._vipExpiry={exp:x,daysLeft:dl,fmtDate:_fmt(x)};}else{window._vipExpiry=null;}
             return obj.r;
-        }catch(e){ return null; }
+        }catch(e){return null;}
     };
-    window._clearSession = function(){ try{ localStorage.removeItem(_K); }catch(e){} };
+    window._clearSession=function(){try{localStorage.removeItem(_K);}catch(e){}};
 }();
 
 function showMainApp(lv)
