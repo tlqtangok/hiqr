@@ -11219,14 +11219,11 @@ function doDownload()
 {
     // djb2 变体 —— 单向哈希，不可逆（无明文凭证存储）
     function _h(s){ var h=5381; for(var i=0;i<s.length;i++) h=(((h<<5)+h)^s.charCodeAt(i))>>>0; return h.toString(36); }
-    var _S='!hq24x', _T=':hqsig', _K='hiqr_ss', _TTL=7*24*3600*1000;
-    // 预计算哈希（代码中不出现明文用户名/密码）
-    // derived:true 账户的密码由 btoa(user+expDate+'\n').replace(/[^a-z]/g,'') 动态推导，过期即失效
+    var _S='!hq24x', _T=':hqsig', _K='hiqr_ss', _KR='hiqr_vip1r', _TTL=7*24*3600*1000;
+    // 静态账户（代码中不出现明文凭证）
     var _A = {
-        'ujis1h':{lv:'vip0',ph:'i2cm7m'},                          // test/test (测试账户)
-        'oxx0nh':{lv:'vip1',ph:'1q8ccar'},                          // jd/pw  (永久)
-        '1uybzsb':{lv:'vip1',exp:'20260622',derived:true},          // vip1test (到期 2026-06-22)
-        '1ljbn8d':{lv:'vip1',exp:'20260622',derived:true}           // jd0 (到期 2026-06-22)
+        'ujis1h':{lv:'vip0',ph:'i2cm7m'},   // test/test (测试账户)
+        'oxx0nh':{lv:'vip1',ph:'1q8ccar'}    // jd/pw  (永久 vip1)
     };
     window._authLevel = null;
     window._vipExpiry = null;
@@ -11237,20 +11234,45 @@ function doDownload()
         return Math.ceil((e-n)/864e5);
     }
     function _fmt(s){ return s.slice(0,4)+'年'+s.slice(4,6)+'月'+s.slice(6,8)+'日'; }
+    // vip1 派生密码公式：btoa(用户名 + 失效日YYYYMMDD + '\n').replace(/[^a-z]/g,'')
     function _derivePw(user,exp){ return btoa(user+exp+'\n').replace(/[^a-z]/g,''); }
+    function _p2(n){ return (n<10?'0':'')+n; }
+    // 计算 today+1月 的 YYYYMMDD（首次登陆即失效日）
+    function _todayPlusMonth(){
+        var d=new Date(); d.setMonth(d.getMonth()+1);
+        return ''+d.getFullYear()+_p2(d.getMonth()+1)+_p2(d.getDate());
+    }
+    // 动态 vip1 注册表（存 localStorage）
+    function _regLoad(){ try{ return JSON.parse(localStorage.getItem(_KR)||'{}'); }catch(e){ return {}; } }
+    function _regSave(uk,exp){
+        var reg=_regLoad(); reg[uk]={exp:exp,sig:_h(uk+':'+exp+_T)};
+        try{ localStorage.setItem(_KR,JSON.stringify(reg)); }catch(e){}
+    }
     window._verifyLogin = function(u,p){
         var uk=_h(u+_S), acc=_A[uk];
-        if(!acc) return null;
-        if(acc.derived){
-            var dl=_daysLeft(acc.exp);
-            if(dl<=0) return 'expired';
-            if(_h(_derivePw(u,acc.exp)+_S+'pw')!==_h(p+_S+'pw')) return null;
-            window._vipExpiry = {exp:acc.exp, daysLeft:dl, fmtDate:_fmt(acc.exp)};
+        // 1. 静态账户（test/vip0, jd/vip1永久）
+        if(acc){
+            if(_h(p+_S+'pw')!==acc.ph) return null;
+            window._vipExpiry=null;
             return acc.lv;
         }
-        if(_h(p+_S+'pw')!==acc.ph) return null;
-        window._vipExpiry = null;
-        return acc.lv;
+        // 2. 已注册的动态 vip1 账户（再次登陆）
+        var reg=_regLoad(), re=reg[uk];
+        if(re && re.exp && re.sig && _h(uk+':'+re.exp+_T)===re.sig){
+            var dl=_daysLeft(re.exp);
+            if(dl<=0) return 'expired';
+            if(_derivePw(u,re.exp)!==p) return null;
+            window._vipExpiry={exp:re.exp,daysLeft:dl,fmtDate:_fmt(re.exp)};
+            return 'vip1';
+        }
+        // 3. 首次 vip1 登陆：验证 derivePw(user, today+1month)==输入密码 → 自动注册
+        var exp1m=_todayPlusMonth();
+        if(_derivePw(u,exp1m)===p){
+            _regSave(uk,exp1m);
+            window._vipExpiry={exp:exp1m,daysLeft:_daysLeft(exp1m),fmtDate:_fmt(exp1m)};
+            return 'vip1';
+        }
+        return null;
     };
     window._saveSession = function(lv){
         var exp=Date.now()+_TTL, x=window._vipExpiry?window._vipExpiry.exp:'';
@@ -11268,7 +11290,7 @@ function doDownload()
             if(x){
                 var dl=_daysLeft(x);
                 if(dl<=0){ window._clearSession(); return null; }
-                window._vipExpiry = {exp:x, daysLeft:dl, fmtDate:_fmt(x)};
+                window._vipExpiry={exp:x,daysLeft:dl,fmtDate:_fmt(x)};
             } else { window._vipExpiry=null; }
             return obj.r;
         }catch(e){ return null; }
