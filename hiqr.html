@@ -32,7 +32,7 @@ img[alt="微信赞赏码"] { width: 270px !important; height: auto !important; }
 #receive-progress { font-size: 2em; color: #0071e3; font-weight: 700; margin: 10px 0; }
 #file-link { display: none; margin-top: 16px; }
 #file-link a { color: #0071e3; font-size: 1.1em; text-decoration: none; }
-.switch-btn { position: fixed; top: 12px; right: 12px; background: rgba(0,0,0,0.6); color: #fff; border: none; border-radius: 8px; padding: 8px 14px; font-size: 0.85em; cursor: pointer; z-index: 100; }
+.switch-btn { background: rgba(0,0,0,0.6); color: #fff; border: none; border-radius: 8px; padding: 8px 14px; font-size: 0.85em; cursor: pointer; z-index: 100; }
 .chunk-info { text-align: center; color: #86868b; font-size: 0.85em; margin-top: 8px; }
 /* Toast 气泡提示 */
 #toast { position: fixed; top: 60px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.78); color: #fff; padding: 10px 24px; border-radius: 20px; font-size: 0.95em; z-index: 9999; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; }
@@ -75,17 +75,28 @@ img[alt="微信赞赏码"] { width: 270px !important; height: auto !important; }
 .auth-info { width:100%;text-align:center;color:#86868b;font-size:0.82em;line-height:2; }
 .auth-info strong { color:#1d1d1f; }
 .auth-info a { color:#0071e3;text-decoration:none; }
-.auth-qr { width:112px;height:auto;border-radius:11px;margin-top:10px;opacity:.93; }
+.auth-qr { width:112px;height:auto;border-radius:11px;margin-top:10px;opacity:.93;cursor:pointer;transition:transform .18s,opacity .18s; }
+.auth-qr:hover { opacity:1;transform:scale(1.06); }
 .auth-qlb { font-size:.76em;color:#aeaeb2;margin-top:4px; }
 #vip0-banner { display:none;width:100%;background:linear-gradient(90deg,#fff1f0,#fff8f6);border-bottom:1.5px solid #ffccc7;text-align:center;padding:6px 14px;font-size:.8em;color:#cf1322;font-weight:500;position:sticky;top:0;z-index:500;letter-spacing:.01em; }
-#logout-btn { position:fixed;top:12px;left:12px;background:rgba(0,0,0,.56);color:#fff;border:none;border-radius:8px;padding:7px 13px;font-size:.82em;cursor:pointer;z-index:200;font-family:inherit;display:none; }
+#logout-btn { background:rgba(0,0,0,.56);color:#fff;border:none;border-radius:8px;padding:7px 13px;font-size:.82em;cursor:pointer;font-family:inherit;display:none; }
 #logout-btn:hover { background:rgba(0,0,0,.78); }
+#top-btns { position:fixed;top:12px;right:12px;display:flex;gap:8px;align-items:center;z-index:200; }
+/* QR 放大灯箱 */
+#qr-lightbox { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:9800;align-items:center;justify-content:center;cursor:zoom-out; }
+#qr-lightbox.show { display:flex; }
+#qr-lightbox img { max-width:88vw;max-height:88vh;border-radius:18px;box-shadow:0 12px 48px rgba(0,0,0,0.5);transition:transform .25s; }
 </style>
 </head>
 <body>
 
 <!-- VIP0 限制条幅 -->
 <div id="vip0-banner">⚠️ 当前为测试账户 (vip0)，最多支持 <strong>5 帧</strong> QR 码 — 如需无限制请联系作者升级</div>
+
+<!-- QR 放大灯箱 -->
+<div id="qr-lightbox" onclick="this.classList.remove('show')">
+  <img src="img/jd_reward_code_small.jpg" alt="赞赏码">
+</div>
 
 <!-- 登录鉴权遮罩 -->
 <div id="auth-overlay">
@@ -102,13 +113,17 @@ img[alt="微信赞赏码"] { width: 270px !important; height: auto !important; }
       <strong>Jidor Tang</strong><br>
       <a href="mailto:tlqtangok@126.com">tlqtangok@126.com</a><br>
       <span style="font-size:.78em;color:#aeaeb2;margin-top:2px;display:block;">联系作者开通 / 升级账户</span>
-      <img class="auth-qr" src="img/jd_reward_code_small.jpg" alt="赞赏码">
-      <div class="auth-qlb">扫码赞赏 / 联系作者 ☕</div>
+      <img class="auth-qr" src="img/jd_reward_code_small.jpg" alt="赞赏码" onclick="document.getElementById('qr-lightbox').classList.add('show')" title="点击查看大图">
+      <div class="auth-qlb">打开微信扫码赞赏</div>
     </div>
   </div>
 </div>
 
-<button class="switch-btn" onclick="switchMode()">切换模式</button>
+<!-- 右上角按钮组：退出 + 切换模式 -->
+<div id="top-btns">
+  <button id="logout-btn" onclick="doLogout()">⎋ 退出</button>
+  <button class="switch-btn" onclick="switchMode()">切换模式</button>
+</div>
 
 <div id="main">
   <div id="toast"></div>
