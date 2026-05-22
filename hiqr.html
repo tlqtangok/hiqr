@@ -11310,8 +11310,14 @@ function doDownload()
         if(_dc(u,_xm)===p){_rsv(_uk,_xm);window._vipExpiry={exp:_xm,daysLeft:_daysLeft(_xm),fmtDate:_fmt(_xm)};return 'vip1';}
         return null;
     };
-    window._saveSession=function(lv){var exp=Date.now()+_TTL,x=window._vipExpiry?window._vipExpiry.exp:'';var sig=_h(lv+':'+exp.toString(36)+':'+x+_T);try{localStorage.setItem(_K,JSON.stringify({r:lv,e:exp,s:sig,x:x}));}catch(e){}};
-    window._loadSession=function(){
+    window._saveSession=function(lv){
+        // vip1 with expiry: session lasts until account expiry date (≈1 month)
+        // vip0 / permanent vip1: fallback to 7-day TTL
+        var x=window._vipExpiry?window._vipExpiry.exp:'';
+        var exp=(lv==='vip1'&&x)?_expDate(x).getTime():Date.now()+_TTL;
+        var sig=_h(lv+':'+exp.toString(36)+':'+x+_T);
+        try{localStorage.setItem(_K,JSON.stringify({r:lv,e:exp,s:sig,x:x}));}catch(e){}
+    };    window._loadSession=function(){
         try{
             var raw=localStorage.getItem(_K);if(!raw)return null;
             var obj=JSON.parse(raw);if(!obj||!obj.r||!obj.e||!obj.s)return null;
