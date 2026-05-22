@@ -92,7 +92,7 @@ img[alt="微信赞赏码"] { width: 270px !important; height: auto !important; }
 <body>
 
 <!-- VIP0 限制条幅 -->
-<div id="vip0-banner">⚠️ 当前为测试账户 (vip0)，最多支持 <strong>5 帧</strong> QR 码 — 如需无限制请联系作者升级</div>
+<div id="vip0-banner">⚠️ 当前为测试账户 (vip0)，最多支持 <strong>3 帧</strong> QR 码 — 如需无限制请联系作者升级</div>
 <div id="vip1-banner">⏰ 您的 vip1 会员将于 <strong id="vip1-exp-date"></strong> 到期，还剩 <strong id="vip1-days-left"></strong> 天，到期后请联系作者续期</div>
 
 <!-- QR 放大灯箱 -->
@@ -10665,10 +10665,12 @@ async function startSend()
             var total = rawChunks.length;
             chunks = [];
 
+            var vip0Limit = 3; // vip0 限制最多 5 帧（约 2.5KB 原始数据）
+
             // vip0 帧数限制
-            if (window._authLevel === 'vip0' && total > 5)
+            if (window._authLevel === 'vip0' && total > vip0Limit)
             {
-                showToast('⚠️ 测试账户最多 5 帧，当前需 ' + total + ' 帧，请联系作者升级账户');
+                showToast('⚠️ 测试账户最多 ' + vip0Limit + ' 帧，当前需 ' + total + ' 帧，请联系作者升级账户');
                 document.getElementById('sendBtn').disabled = false;
                 document.getElementById('status').textContent = '';
                 return;
